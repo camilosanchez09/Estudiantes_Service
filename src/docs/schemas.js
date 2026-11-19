@@ -2,6 +2,8 @@ const {
   STUDENT_DOCUMENT_TYPES,
   GENDERS,
   STUDENT_STATUSES,
+  SEDES,
+  HORARIOS,
   PROGRAM_STATUSES,
   MODALITIES,
   DOCUMENT_TYPES,
@@ -37,6 +39,13 @@ const studentFields = {
     example: 1,
     description: 'Id de un programa existente',
   },
+  sede: { type: 'string', enum: SEDES, example: 'Tunja', description: 'Sede donde estudia' },
+  horario: {
+    type: 'string',
+    enum: HORARIOS,
+    example: 'Diurno',
+    description: 'Jornada u horario en que recibe clases',
+  },
 };
 
 const studentCreateExample = {
@@ -47,12 +56,17 @@ const studentCreateExample = {
   birthDate: '2002-06-08',
   gender: 'female',
   programId: 1,
+  sede: 'Tunja',
+  horario: 'Diurno',
 };
 
 const studentExample = {
   id: 12,
   nombre: 'Laura Gómez',
   programa: 'Ingeniería de Sistemas',
+  programaCodigo: 'ISIS',
+  sede: 'Tunja',
+  horario: 'Diurno',
   firstName: 'Laura',
   lastName: 'Gómez',
   documentType: 'CC',
@@ -179,6 +193,11 @@ const schemas = {
         example: 'Ingeniería de Sistemas',
         description: 'Nombre del programa del estudiante',
       },
+      programaCodigo: {
+        type: 'string',
+        example: 'ISIS',
+        description: 'Código del programa (ISIS, IIND, ICIV, ADEM, CPUB, DERE, TGRE)',
+      },
       ...studentFields,
       email: {
         type: 'string',
@@ -231,16 +250,22 @@ const schemas = {
     type: 'object',
     description:
       'Subconjunto mínimo garantizado de GET /api/estudiantes/{id} que usará el Gateway en /api/estudiantes/{id}/detalle.',
-    required: ['id', 'nombre', 'programa'],
+    required: ['id', 'nombre', 'programa', 'programaCodigo'],
     properties: pick(
       {
         id: { type: 'integer', example: 12 },
         nombre: { type: 'string', example: 'Laura Gómez' },
         programa: { type: 'string', example: 'Ingeniería de Sistemas' },
+        programaCodigo: { type: 'string', example: 'ISIS' },
       },
-      ['id', 'nombre', 'programa'],
+      ['id', 'nombre', 'programa', 'programaCodigo'],
     ),
-    example: { id: 12, nombre: 'Laura Gómez', programa: 'Ingeniería de Sistemas' },
+    example: {
+      id: 12,
+      nombre: 'Laura Gómez',
+      programa: 'Ingeniería de Sistemas',
+      programaCodigo: 'ISIS',
+    },
   },
   StudentCreate: {
     type: 'object',

@@ -3,6 +3,8 @@ const {
   STUDENT_DOCUMENT_TYPES,
   GENDERS,
   STUDENT_STATUSES,
+  SEDES,
+  HORARIOS,
   STUDENT_SORT_FIELDS,
 } = require('../constants/enums');
 const {
@@ -33,10 +35,17 @@ const shape = {
   gender: z.enum(GENDERS),
   status: z.enum(STUDENT_STATUSES),
   programId: idBody,
+  sede: z.enum(SEDES),
+  horario: z.enum(HORARIOS),
 };
 
-// POST: el estado es opcional (por defecto "active").
-const createStudentBody = z.strictObject({ ...shape, status: shape.status.default('active') });
+// POST: estado, sede y horario son opcionales y traen valores por defecto.
+const createStudentBody = z.strictObject({
+  ...shape,
+  status: shape.status.default('active'),
+  sede: shape.sede.default('Tunja'),
+  horario: shape.horario.default('Diurno'),
+});
 // PUT: reemplazo completo, todos los campos son obligatorios.
 const replaceStudentBody = z.strictObject(shape);
 // PATCH: actualización parcial, al menos un campo.

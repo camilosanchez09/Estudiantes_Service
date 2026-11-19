@@ -4,6 +4,9 @@
 const STUDENT_DOCUMENT_TYPES = ['CC', 'TI', 'CE', 'PASSPORT'];
 const GENDERS = ['female', 'male', 'other'];
 const STUDENT_STATUSES = ['active', 'inactive', 'graduated', 'suspended'];
+// Sedes y jornadas de la UPTC que se usan en los datos de demostración.
+const SEDES = ['Tunja', 'Sogamoso', 'Duitama', 'Aguazul'];
+const HORARIOS = ['Diurno', 'Nocturno', 'Virtual'];
 
 const PROGRAM_STATUSES = ['active', 'inactive'];
 const MODALITIES = ['onsite', 'online', 'hybrid'];
@@ -31,6 +34,8 @@ module.exports = {
   STUDENT_DOCUMENT_TYPES,
   GENDERS,
   STUDENT_STATUSES,
+  SEDES,
+  HORARIOS,
   PROGRAM_STATUSES,
   MODALITIES,
   DOCUMENT_TYPES,

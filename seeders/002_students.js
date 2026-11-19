@@ -279,6 +279,9 @@ const students = [
   ],
 ];
 
+const SEDES = ['Tunja', 'Sogamoso', 'Duitama', 'Aguazul'];
+const HORARIOS = ['Diurno', 'Nocturno', 'Virtual'];
+
 async function run(client) {
   let n = 0;
   for (const [
@@ -293,12 +296,26 @@ async function run(client) {
     email,
   ] of students) {
     n += 1;
+    // Distribución determinista: cada sede y cada jornada queda representada.
+    const sede = SEDES[(n - 1) % SEDES.length];
+    const horario = HORARIOS[(n - 1) % HORARIOS.length];
+
+    // ON CONFLICT DO UPDATE conserva el id de los estudiantes ya existentes
+    // (los contactos y documentos se referencian por documento, no por id).
     await client.query(
       `INSERT INTO students
-         (first_name, last_name, document_type, document_number, birth_date, gender, status, program_id)
-       SELECT $1, $2, $3, $4, $5, $6, $7, p.id FROM programs p WHERE p.code = $8
-       ON CONFLICT DO NOTHING`,
-      [first, last, docType, docNumber, birth, gender, status, programCode],
+         (first_name, last_name, document_type, document_number, birth_date, gender, status, program_id, sede, horario)
+       SELECT $1, $2, $3, $4, $5, $6, $7, p.id, $9, $10 FROM programs p WHERE p.code = $8
+       ON CONFLICT (document_type, document_number) DO UPDATE
+         SET first_name = EXCLUDED.first_name,
+             last_name = EXCLUDED.last_name,
+             birth_date = EXCLUDED.birth_date,
+             gender = EXCLUDED.gender,
+             status = EXCLUDED.status,
+             program_id = EXCLUDED.program_id,
+             sede = EXCLUDED.sede,
+             horario = EXCLUDED.horario`,
+      [first, last, docType, docNumber, birth, gender, status, programCode, sede, horario],
     );
 
     // Contacto principal (1:1)

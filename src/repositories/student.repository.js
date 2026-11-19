@@ -5,7 +5,8 @@ const { WhereBuilder, escapeLike, buildUpdateSet } = require('../utils/sql');
 const COLUMNS = `s.id, s.first_name AS "firstName", s.last_name AS "lastName",
   s.document_type AS "documentType", s.document_number AS "documentNumber",
   s.birth_date AS "birthDate", s.gender, s.status, s.program_id AS "programId",
-  p.name AS "programName", c.email,
+  s.sede, s.horario,
+  p.code AS "programaCodigo", p.name AS "programName", c.email,
   s.photo_key AS "photoKey", s.photo_original_name AS "photoOriginalName",
   s.photo_content_type AS "photoContentType", s.photo_size_bytes AS "photoSizeBytes",
   s.photo_uploaded_at AS "photoUploadedAt",
@@ -37,6 +38,8 @@ const UPDATABLE_COLUMNS = {
   gender: 'gender',
   status: 'status',
   programId: 'program_id',
+  sede: 'sede',
+  horario: 'horario',
 };
 
 async function findAll({ filters = {}, sortBy, sortDirection, limit, offset }) {
@@ -83,8 +86,8 @@ async function existsById(id, db = pool) {
 async function create(data, db = pool) {
   const { rows } = await db.query(
     `INSERT INTO students
-       (first_name, last_name, document_type, document_number, birth_date, gender, status, program_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (first_name, last_name, document_type, document_number, birth_date, gender, status, program_id, sede, horario)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING id`,
     [
       data.firstName,
@@ -95,6 +98,8 @@ async function create(data, db = pool) {
       data.gender,
       data.status,
       data.programId,
+      data.sede,
+      data.horario,
     ],
   );
   return rows[0].id;

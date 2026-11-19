@@ -7,7 +7,7 @@
 Microservicio REST **independiente** que administra estudiantes y sus datos asociados. Forma parte de un sistema de cuatro procesos (Estudiantes, Materias, Inscripciones y API Gateway); **este repositorio implementa solo el módulo Estudiantes**.
 
 - Base de datos propia: PostgreSQL `estudiantes_db`.
-- Puerto propio: `3001` (API) y `5433` (PostgreSQL publicado en tu máquina).
+- Puerto propio: `3001` (API) y `5436` (PostgreSQL publicado en tu máquina, configurable con `DB_PORT`).
 - CRUD completo de **Estudiantes, Programas, Contactos y Documentos**.
 - Paginación (`pageNumber`, `pageSize`), ordenamiento (`sortBy`, `sortDirection`) y cinco filtros en `/api/estudiantes`.
 - Documentación Swagger/OpenAPI en `/api-docs`.
@@ -58,7 +58,7 @@ src/
   utils/         pagination.js · sql.js (WhereBuilder, escapeLike, buildUpdateSet)
   validators/    esquemas Zod por entidad
 tests/           unit/ · integration/ · helpers/ · setup/
-migrations/      001…004 (.sql)
+migrations/      001…006 (.sql)
 seeders/         001_programs.js · 002_students.js
 docs/            EVIDENCIAS.md · SUSTENTACION.md
 ```
@@ -84,7 +84,7 @@ cp .env.example .env          # Windows CMD: copy .env.example .env
 docker compose up -d          # levanta PostgreSQL y RustFS (S3 local) y crea el bucket
 npm install
 npm run migrate               # crea las tablas (incluye los metadatos de la foto)
-npm run seed                  # datos de prueba (7 programas, 25 estudiantes)
+npm run seed                  # datos de prueba (7 programas, 25 estudiantes con sede y horario)
 npm run dev                   # API en http://localhost:3001
 ```
 
@@ -99,7 +99,7 @@ Comprueba: <http://localhost:3001/health> y <http://localhost:3001/api-docs>.
 | `LOG_LEVEL`               | `info`                | `error`, `warn`, `info`, `debug`, `silent`                              |
 | `CORS_ORIGIN`             | `*`                   | Orígenes permitidos separados por coma (en producción, lista explícita) |
 | `DB_HOST`                 | `localhost`           | Host de PostgreSQL                                                      |
-| `DB_PORT`                 | `5433`                | Puerto **publicado en tu máquina** (dentro de Docker es 5432)           |
+| `DB_PORT`                 | `5436`                | Puerto **publicado en tu máquina** (dentro de Docker es 5432)           |
 | `DB_USER` / `DB_PASSWORD` | —                     | Credenciales (obligatorias, sin valor por defecto en el código)         |
 | `DB_NAME`                 | `estudiantes_db`      | Base de datos independiente del módulo                                  |
 | `DB_NAME_TEST`            | `estudiantes_db_test` | Base usada solo por Jest                                                |
@@ -118,9 +118,9 @@ Comprueba: <http://localhost:3001/health> y <http://localhost:3001/api-docs>.
 
 El contenedor se crea con `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB` tomados de `.env`. Esos valores **solo se aplican la primera vez** que se crea el volumen; si luego cambias la clave en `.env`, ejecuta `docker compose down -v` (borra los datos) y vuelve a levantar.
 
-Si ya tienes un PostgreSQL local usando el puerto 5433, cambia `DB_PORT` en `.env`.
+Si ya tienes un PostgreSQL local usando el puerto 5436, cambia `DB_PORT` en `.env`.
 
-Conexión manual: `psql -h localhost -p 5433 -U <DB_USER> -d estudiantes_db`.
+Conexión manual: `psql -h localhost -p 5436 -U <DB_USER> -d estudiantes_db`.
 
 ## 8. Comandos Docker
 
@@ -153,6 +153,8 @@ npm run migrate:reset    # BORRA todo el esquema y vuelve a migrar (bloqueado en
 | `002_create_students.sql`  | tabla `students`, FK a `programs`, único `(document_type, document_number)`, índices                   |
 | `003_create_contacts.sql`  | tabla `contacts`, `student_id` **UNIQUE** (1:1), correo único sin distinguir mayúsculas                |
 | `004_create_documents.sql` | tabla `documents`, único `(type, number)`, un solo documento principal por estudiante (índice parcial) |
+| `005_add_student_photo.sql` | metadatos de la foto (`photo_key`, tipo, tamaño, fecha) y `CHECK` de tipo/tamaño                      |
+| `006_add_student_sede_horario.sql` | columnas `sede` y `horario` con `CHECK` de los valores permitidos                              |
 
 ## 10. Seeders
 
@@ -160,7 +162,7 @@ npm run migrate:reset    # BORRA todo el esquema y vuelve a migrar (bloqueado en
 npm run seed
 ```
 
-Inserta 7 programas y 25 estudiantes con contacto y documentos. Es **idempotente** (`ON CONFLICT DO NOTHING`): puedes ejecutarlo varias veces. Sobre una base vacía, _Laura Gómez_ queda con `id = 12` (el ejemplo del contrato con el Gateway). Está deshabilitado con `NODE_ENV=production`.
+Inserta 7 programas y 25 estudiantes con contacto, documentos, sede y horario. Es **idempotente**: actualiza los estudiantes existentes por `(document_type, document_number)` y conserva sus ids, así que puedes ejecutarlo varias veces. Las sedes (`Tunja`, `Sogamoso`, `Duitama`, `Aguazul`) y los horarios (`Diurno`, `Nocturno`, `Virtual`) se asignan de forma determinista para que todas las combinaciones queden representadas. Sobre una base vacía, _Laura Gómez_ queda con `id = 12` (el ejemplo del contrato con el Gateway). Está deshabilitado con `NODE_ENV=production`.
 
 ## 11. Ejecución en desarrollo
 
@@ -283,7 +285,7 @@ curl -X POST $B/api/programas -H "Content-Type: application/json" \
   -d '{"code":"MECA","name":"Ingeniería Mecánica","faculty":"Facultad de Ingeniería","modality":"onsite"}'
 
 curl -X POST $B/api/estudiantes -H "Content-Type: application/json" \
-  -d '{"firstName":"Ana","lastName":"Ruiz","documentType":"CC","documentNumber":"1098765432","birthDate":"2003-04-15","gender":"female","programId":1}'
+  -d '{"firstName":"Ana","lastName":"Ruiz","documentType":"CC","documentNumber":"1098765432","birthDate":"2003-04-15","gender":"female","programId":1,"sede":"Duitama","horario":"Nocturno"}'
 
 # Actualizar
 curl -X PATCH $B/api/estudiantes/26 -H "Content-Type: application/json" -d '{"status":"inactive"}'
@@ -348,6 +350,9 @@ El Gateway enruta `/api/estudiantes/**` a `http://<host-estudiantes>:3001` (URL 
   "id": 12,
   "nombre": "Laura Gómez",
   "programa": "Ingeniería de Sistemas",
+  "programaCodigo": "ISIS",
+  "sede": "Tunja",
+  "horario": "Diurno",
   "firstName": "Laura",
   "lastName": "Gómez",
   "documentType": "CC",
@@ -362,7 +367,8 @@ El Gateway enruta `/api/estudiantes/**` a `http://<host-estudiantes>:3001` (URL 
 }
 ```
 
-- **Garantizados** (contrato mínimo estable): `id` (entero), `nombre` (texto), `programa` (texto).
+- **Garantizados** (contrato mínimo estable): `id` (entero), `nombre` (texto), `programa` (texto) y `programaCodigo` (texto; el Gateway lo usa para impedir la inscripción en materias de otro programa).
+- `sede` y `horario` son informativos para la ficha del estudiante: `Tunja`, `Sogamoso`, `Duitama` o `Aguazul`; `Diurno`, `Nocturno` o `Virtual`.
 - Los demás campos son informativos; el Gateway no debe depender de ellos.
 - Errores: `404` `STUDENT_NOT_FOUND` si no existe; `400` `INVALID_ID` si el id no es un entero positivo; `503` `DATABASE_UNAVAILABLE` si PostgreSQL falla. Siempre con el formato `{ "error": { "code", "message", "details" } }`.
 

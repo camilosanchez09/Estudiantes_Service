@@ -18,6 +18,9 @@ const row = {
   status: 'active',
   programId: 1,
   programName: 'Ingeniería de Sistemas',
+  programaCodigo: 'ISIS',
+  sede: 'Tunja',
+  horario: 'Diurno',
   email: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -32,6 +35,9 @@ describe('student.service', () => {
       id: 12,
       nombre: 'Laura Gómez',
       programa: 'Ingeniería de Sistemas',
+      programaCodigo: 'ISIS',
+      sede: 'Tunja',
+      horario: 'Diurno',
       email: null,
     });
     expect(dto.programName).toBeUndefined(); // campo interno, no se expone

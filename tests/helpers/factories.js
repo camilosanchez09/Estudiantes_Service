@@ -28,6 +28,8 @@ const studentPayload = (programId, overrides = {}) => {
     birthDate: '2002-06-08',
     gender: 'female',
     programId,
+    sede: 'Tunja',
+    horario: 'Diurno',
     ...overrides,
   };
 };

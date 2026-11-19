@@ -27,6 +27,8 @@ describe('validators/student', () => {
     expect(result.success).toBe(true);
     expect(result.data.firstName).toBe('Laura');
     expect(result.data.status).toBe('active');
+    expect(result.data.sede).toBe('Tunja');
+    expect(result.data.horario).toBe('Diurno');
   });
 
   it.each([
@@ -40,6 +42,8 @@ describe('validators/student', () => {
     ['documentNumber', "1' OR '1'='1"],
     ['programId', '1'],
     ['programId', 0],
+    ['sede', 'Bogotá'],
+    ['horario', 'Madrugada'],
     ['firstName', ''],
     ['lastName', 'x'.repeat(101)],
   ])('rechaza %s = %j', (field, value) => {
