@@ -101,15 +101,17 @@ describe('student.service', () => {
     expect(result.data).toHaveLength(1);
   });
 
-  it('remove lanza STUDENT_NOT_FOUND si no se eliminó ninguna fila', async () => {
-    studentRepository.remove.mockResolvedValue({ deleted: false, photoKey: null });
+  it('remove lanza STUDENT_NOT_FOUND si el estudiante no existe', async () => {
+    studentRepository.deactivate.mockResolvedValue(false);
     await expect(studentService.remove(5)).rejects.toMatchObject({ code: 'STUDENT_NOT_FOUND' });
   });
 
-  it('remove borra también la foto del almacenamiento', async () => {
-    studentRepository.remove.mockResolvedValue({ deleted: true, photoKey: 'estudiantes/5/a.png' });
+  it('remove es lógico: inactiva al estudiante y no borra fila ni foto', async () => {
+    studentRepository.deactivate.mockResolvedValue(true);
     await studentService.remove(5);
-    expect(photoStorage.deletePhoto).toHaveBeenCalledWith('estudiantes/5/a.png');
+    expect(studentRepository.deactivate).toHaveBeenCalledWith(5);
+    expect(studentRepository.remove).not.toHaveBeenCalled();
+    expect(photoStorage.deletePhoto).not.toHaveBeenCalled();
   });
 });
 

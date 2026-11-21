@@ -112,8 +112,22 @@ async function update(id, changes, db = pool) {
 }
 
 /**
+ * Borrado lógico (consistencia A1): el estudiante queda INACTIVO y no se borra,
+ * porque Inscripciones (otra base, sin FK) lo sigue referenciando.
+ * Devuelve false si el estudiante no existe.
+ */
+async function deactivate(id, db = pool) {
+  const { rowCount } = await db.query(
+    "UPDATE students SET status = 'inactive' WHERE id = $1",
+    [id],
+  );
+  return rowCount > 0;
+}
+
+/**
+ * Borrado físico: ya no lo usa la API (DELETE es lógico), se conserva para scripts.
  * Elimina al estudiante; contactos y documentos se eliminan en cascada (ON DELETE CASCADE).
- * Devuelve { deleted, photoKey } para que el servicio borre también el objeto en S3.
+ * Devuelve { deleted, photoKey }.
  */
 async function remove(id, db = pool) {
   const { rows } = await db.query(
@@ -165,6 +179,7 @@ module.exports = {
   create,
   update,
   remove,
+  deactivate,
   setPhoto,
   clearPhoto,
 };

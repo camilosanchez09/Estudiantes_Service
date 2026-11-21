@@ -153,12 +153,14 @@ describe('GET y DELETE /api/estudiantes/:id/foto', () => {
     expect(after.body.foto).toBeNull();
   });
 
-  it('eliminar al estudiante borra también su foto del bucket', async () => {
+  it('eliminar al estudiante (borrado lógico) conserva su foto', async () => {
     await upload(student.id, PNG);
-    const key = photoStorage.putPhoto.mock.calls[0][0];
 
     await api().delete(`/api/estudiantes/${student.id}`).expect(204);
 
-    expect(photoStorage.deletePhoto).toHaveBeenCalledWith(key);
+    expect(photoStorage.deletePhoto).not.toHaveBeenCalled();
+    const after = await api().get(`/api/estudiantes/${student.id}`).expect(200);
+    expect(after.body.status).toBe('inactive');
+    expect(after.body.foto).not.toBeNull();
   });
 });
