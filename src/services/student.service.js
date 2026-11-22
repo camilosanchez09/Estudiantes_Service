@@ -98,10 +98,14 @@ async function update(id, changes) {
   return getById(id);
 }
 
+/**
+ * DELETE lógico (consistencia A1): no se borra la fila ni la foto, el estudiante
+ * pasa a status 'inactive'. Así ninguna inscripción queda apuntando a un
+ * estudiante que ya no existe, e Inscripciones rechaza (422) nuevas inscripciones suyas.
+ */
 async function remove(id) {
-  const { deleted, photoKey } = await studentRepository.remove(id);
-  if (!deleted) throw Errors.studentNotFound();
-  if (photoKey) await deleteObjectQuietly(photoKey);
+  const updated = await studentRepository.deactivate(id);
+  if (!updated) throw Errors.studentNotFound();
 }
 
 /**

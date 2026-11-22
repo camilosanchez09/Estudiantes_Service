@@ -242,17 +242,18 @@ describe('PATCH /api/estudiantes/:id', () => {
 });
 
 describe('DELETE /api/estudiantes/:id', () => {
-  it('elimina el estudiante (204) y luego responde 404', async () => {
+  it('es un borrado lógico: responde 204 y el estudiante queda inactive', async () => {
     const created = await createStudent(program.id);
 
     const res = await api().delete(`/api/estudiantes/${created.id}`);
     expect(res.status).toBe(204);
     expect(res.text).toBe('');
 
-    await api().get(`/api/estudiantes/${created.id}`).expect(404);
+    const after = await api().get(`/api/estudiantes/${created.id}`).expect(200);
+    expect(after.body.status).toBe('inactive');
   });
 
-  it('elimina en cascada su contacto y sus documentos', async () => {
+  it('conserva su contacto y sus documentos (no se borra nada)', async () => {
     const created = await createStudent(program.id);
     await api().post(`/api/estudiantes/${created.id}/contacto`).send(contactPayload()).expect(201);
     await api()
@@ -264,8 +265,8 @@ describe('DELETE /api/estudiantes/:id', () => {
 
     const contacts = await pool.query('SELECT COUNT(*)::int AS n FROM contacts');
     const documents = await pool.query('SELECT COUNT(*)::int AS n FROM documents');
-    expect(contacts.rows[0].n).toBe(0);
-    expect(documents.rows[0].n).toBe(0);
+    expect(contacts.rows[0].n).toBe(1);
+    expect(documents.rows[0].n).toBe(1);
   });
 
   it('responde 404 STUDENT_NOT_FOUND si no existe', async () => {
